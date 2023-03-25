@@ -57,6 +57,19 @@ fun Application.configureSecurity() {
 
             call.respond(HttpStatusCode.OK, mapOf("id" to account.id.toString(), "key" to account.apiKey))
         }
+        post("/account/delete") {
+            val apiKey = call.request.headers["Authorization"]
+            if (apiKey == null) {
+                call.respond(HttpStatusCode.Unauthorized)
+            } else {
+                val account = DB.getAccountByKeyOrNull(apiKey)
+                if (account == null) {
+                    call.respond(HttpStatusCode.Unauthorized)
+                } else {
+                    DB.deleteAccount(account)
+                }
+            }
+        }
     }
 }
 
@@ -74,7 +87,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.createAccount(input: 
     val estimator = Nbvcxz(estimatorConfig)
 
     if (!estimator.estimate(input.password).isMinimumEntropyMet) {
-        call.respond(HttpStatusCode.Companion.BadRequest, mapOf("error" to "password too weak"))
+        call.respond(HttpStatusCode.BadRequest, mapOf("error" to "password too weak"))
         return null
     }
 

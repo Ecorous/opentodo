@@ -4,6 +4,7 @@ import org.ecorous.Account
 import org.ecorous.SerializableTodo
 import org.ecorous.Todo
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
 
@@ -110,6 +111,13 @@ object DB {
         return transaction(db) {
             addLogger(StdOutSqlLogger)
             !Accounts.select { Accounts.username eq username }.empty()
+        }
+    }
+
+    fun deleteAccount(account: Account) {
+        transaction(db) {
+            addLogger(StdOutSqlLogger)
+            Accounts.deleteWhere { Accounts.id eq account.id }
         }
     }
 }
