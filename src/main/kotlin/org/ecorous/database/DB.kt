@@ -3,7 +3,7 @@ package org.ecorous.database
 import org.ecorous.Account
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.transactions.transactionManager
+import java.util.*
 
 object DB {
     var db: Database? = null
@@ -27,10 +27,32 @@ object DB {
                 Accounts.insert {
                     it[id] = account.id
                     it[username] = account.username
+                    it[password] = account.password
                     it[apiKey] = account.apiKey
                 }
             }
         }
+    }
+
+    fun getAccountByUsernameOrNull(username: String): Account? {
+        return transaction(db) {
+            Accounts.select { Accounts.username eq username }.singleOrNull()?.accountFromRow()
+        }
+    }
+
+    fun getAccountByIdOrNull(id: UUID): Account? {
+        return transaction(db) {
+            Accounts.select { Accounts.id eq id }.singleOrNull()?.accountFromRow()
+        }
+    }
+
+    private fun ResultRow.accountFromRow(): Account {
+        return Account(
+            id = this[Accounts.id],
+            username = this[Accounts.username],
+            password = this[Accounts.password],
+            apiKey = this[Accounts.apiKey],
+        )
     }
 
     fun ifExistsUsername(username: String): Boolean {
