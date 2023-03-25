@@ -97,7 +97,7 @@ object DB {
         db.apply {
             transaction {
                 addLogger(StdOutSqlLogger)
-                val selection = Todos.select {Todos.accountID eq account.id}
+                val selection = Todos.select { Todos.accountID eq account.id }
                 selection.forEach {
                     todos.add(SerializableTodo(it[Todos.id].toString(), it[Todos.title], it[Todos.description], it[Todos.group]))
                 }
@@ -106,19 +106,10 @@ object DB {
         return todos
     }
 
-    fun ifExistsUsername(username: String): Boolean {
-        var sList = false
-        db.apply {
-            transaction {
-                addLogger(StdOutSqlLogger)
-                sList = try {
-                    Accounts.select { Accounts.username eq username }.single()[Accounts.username] != ""
-                    true
-                } catch (e: NoSuchElementException) {
-                    false
-                }
-            }
+    fun accountByUsernameExists(username: String): Boolean {
+        return transaction(db) {
+            addLogger(StdOutSqlLogger)
+            !Accounts.select { Accounts.username eq username }.empty()
         }
-        return sList
     }
 }
