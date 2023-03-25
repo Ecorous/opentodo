@@ -67,6 +67,7 @@ fun Application.configureSecurity() {
                     call.respond(HttpStatusCode.Unauthorized)
                 } else {
                     DB.deleteAccount(account)
+                    call.respond(mapOf("message" to "account deleted"))
                 }
             }
         }
