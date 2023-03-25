@@ -3,9 +3,9 @@ package org.ecorous
 import kotlinx.serialization.Serializable
 import java.nio.ByteBuffer
 import java.security.SecureRandom
-import java.util.UUID
+import java.util.*
 
-data class Account(val id: UUID, val username: String, val apiKey: String)
+data class Account(val id: UUID, val username: String, val password: String?, val apiKey: String)
 data class Todo(val id: UUID, val title: String, val description: String, val group: String, val accountID: UUID)
 @Serializable
 data class SerializableTodo(val id: String, val title: String, val description: String, val group: String)

@@ -1,46 +1,89 @@
 package org.ecorous.plugins
 
+import com.password4j.Password
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.util.Identity.encode
-import kotlinx.css.input
+import io.ktor.util.pipeline.*
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonConfiguration
+import me.gosimple.nbvcxz.Nbvcxz
+import me.gosimple.nbvcxz.resources.ConfigurationBuilder
+import me.gosimple.nbvcxz.resources.DictionaryBuilder
 import org.ecorous.Account
 import org.ecorous.Utils
-import org.ecorous.database.Accounts
 import org.ecorous.database.DB
 import java.util.*
 
 @Serializable
-data class AccountInput(val username: String)
+data class AccountInput(
+    val username: String?,
+    // Generally discouraged, but JSON makes this a bit annoying.
+    val password: String?,
+)
+
 fun Application.configureSecurity() {
     routing {
         post("/account") {
             val json = call.receiveText()
             val input = Json.decodeFromString<AccountInput>(json)
-            println(DB.ifExistsUsername(input.username))
+
+            if (input.username == null) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "enter a username"))
+                return@post
+            }
             if (input.username.length > 50) {
 
-                call.respond(mapOf("error" to "username too long. max chars: 50"))
-            } else if (DB.ifExistsUsername(input.username)) {
-                call.respond(mapOf("error" to "username already exists. must be unique"))
-            } else {
-                var apiKey = Utils.generateApiKey()
-                val account = Account(UUID.randomUUID(), input.username, apiKey)
-                try {
-                    DB.pushAccount(account)
-                } catch (e: SerializationException) {
-
-                }
-                call.respond(mapOf("id" to account.id.toString(), "key" to apiKey))
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "username too long. max chars: 50"))
+                return@post
             }
+            if (input.password == null) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to ":catstare: https://cdn.discordapp.com/emojis/1043075191955267665.png"))
+                return@post
+            }
+
+            var account = DB.getAccountByUsernameOrNull(input.username)
+
+            if (account == null) {
+                // Note: If null, createAccount failed the password check
+                account = createAccount(input) ?: return@post
+            } else if (!Password.check(input.password, account.password).withArgon2()) {
+                call.respond(HttpStatusCode.Forbidden, mapOf("error" to "incorrect password"))
+                return@post
+            }
+
+            call.respond(HttpStatusCode.OK, mapOf("id" to account.id.toString(), "key" to account.apiKey))
         }
     }
+}
+
+private suspend fun PipelineContext<Unit, ApplicationCall>.createAccount(input: AccountInput): Account? {
+    val selfDictionary = DictionaryBuilder()
+        .setDictionaryName("user info")
+        .setExclusion(true)
+        .addWord(input.username, 0)
+        .createDictionary()
+
+    val estimatorConfig = ConfigurationBuilder()
+        .setDictionaries(ConfigurationBuilder.getDefaultDictionaries() + selfDictionary)
+        .createConfiguration()
+
+    val estimator = Nbvcxz(estimatorConfig)
+
+    if (!estimator.estimate(input.password).isMinimumEntropyMet) {
+        call.respond(HttpStatusCode.Companion.BadRequest, mapOf("error" to "password too weak"))
+        return null
+    }
+
+    val result = Password.hash(input.password).addRandomSalt().withArgon2().result
+    val apiKey = Utils.generateApiKey()
+
+    val account = Account(UUID.randomUUID(), input.username!!, result, apiKey)
+
+    DB.pushAccount(account)
+
+    return account
 }

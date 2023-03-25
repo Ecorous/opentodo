@@ -51,4 +51,7 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-jdbc:$exposed_version")
     implementation("org.jetbrains.exposed:exposed-jodatime:$exposed_version")
     implementation("org.xerial:sqlite-jdbc:3.41.2.1")
+
+    implementation("com.password4j:password4j:1.7.0")
+    implementation("me.gosimple:nbvcxz:1.5.1")
 }

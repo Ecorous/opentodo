@@ -5,7 +5,6 @@ import org.ecorous.SerializableTodo
 import org.ecorous.Todo
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.jetbrains.exposed.sql.transactions.transactionManager
 import java.util.*
 
 object DB {
@@ -30,6 +29,7 @@ object DB {
                 Accounts.insert {
                     it[id] = account.id
                     it[username] = account.username
+                    it[password] = account.password
                     it[apiKey] = account.apiKey
                 }
             }
@@ -52,45 +52,30 @@ object DB {
     }
 
     fun getAccountByKeyOrNull(apiKey: String): Account? {
-        var account: Account? = null
-        db.apply {
-            transaction {
-                addLogger(StdOutSqlLogger)
-                val selection = Accounts.select {Accounts.apiKey eq apiKey}.singleOrNull()
-                if (selection != null) {
-                    account = Account(selection[Accounts.id], selection[Accounts.username], selection[Accounts.apiKey])
-                }
-            }
+        return transaction(db) {
+            Accounts.select { Accounts.apiKey eq apiKey }.singleOrNull()?.accountFromRow()
         }
-        return account
     }
 
     fun getAccountByUsernameOrNull(username: String): Account? {
-        var account: Account? = null
-        db.apply {
-            transaction {
-                addLogger(StdOutSqlLogger)
-                val selection = Accounts.select {Accounts.username eq username}.singleOrNull()
-                if (selection != null) {
-                    account = Account(selection[Accounts.id], selection[Accounts.username], selection[Accounts.apiKey])
-                }
-            }
+        return transaction(db) {
+            Accounts.select { Accounts.username eq username }.singleOrNull()?.accountFromRow()
         }
-        return account
     }
 
-    fun getAccountByUUIDOrNull(id: UUID): Account? {
-        var account: Account? = null
-        db.apply {
-            transaction {
-                addLogger(StdOutSqlLogger)
-                val selection = Accounts.select {Accounts.id eq id}.singleOrNull()
-                if (selection != null) {
-                    account = Account(selection[Accounts.id], selection[Accounts.username], selection[Accounts.apiKey])
-                }
-            }
+    fun getAccountByIdOrNull(id: UUID): Account? {
+        return transaction(db) {
+            Accounts.select { Accounts.id eq id }.singleOrNull()?.accountFromRow()
         }
-        return account
+    }
+
+    private fun ResultRow.accountFromRow(): Account {
+        return Account(
+            id = this[Accounts.id],
+            username = this[Accounts.username],
+            password = this[Accounts.password],
+            apiKey = this[Accounts.apiKey],
+        )
     }
 
     fun getTodosForAccount(account: Account): List<Todo> {
@@ -98,7 +83,7 @@ object DB {
         db.apply {
             transaction {
                 addLogger(StdOutSqlLogger)
-                val selection = Todos.select {Todos.accountID eq account.id}
+                val selection = Todos.select { Todos.accountID eq account.id }
                 selection.forEach {
                     todos.add(Todo(it[Todos.id], it[Todos.title], it[Todos.description], it[Todos.group], it[Todos.accountID]))
                 }
@@ -129,7 +114,7 @@ object DB {
                 sList = try {
                     Accounts.select { Accounts.username eq username }.single()[Accounts.username] != ""
                     true
-                } catch (e: java.util.NoSuchElementException) {
+                } catch (e: NoSuchElementException) {
                     false
                 }
             }
