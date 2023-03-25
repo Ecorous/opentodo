@@ -37,7 +37,7 @@ fun Application.configureSecurity() {
                 } catch (e: SerializationException) {
 
                 }
-                call.respond(mapOf("id" to account.id, "key" to apiKey))
+                call.respond(mapOf("id" to account.id.toString(), "key" to apiKey))
             }
         }
     }

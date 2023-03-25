@@ -11,7 +11,8 @@ import org.ecorous.database.DB
 fun Application.configureRouting() {
     install(StatusPages) {
         exception<Throwable> { call, cause ->
-            call.respondText(text = "500: $cause", status = HttpStatusCode.InternalServerError)
+            cause.printStackTrace()
+            call.respond(mapOf("error" to "exception caught: $cause", "stacktrace" to cause.stackTrace))
         }
         status(HttpStatusCode.NotFound) { call, status ->
             call.respond(mapOf("error" to "not found"))
