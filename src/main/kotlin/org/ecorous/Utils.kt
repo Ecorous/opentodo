@@ -6,9 +6,13 @@ import java.util.UUID
 
 data class Account(val id: UUID, val username: String, val apiKey: String)
 object Utils {
-    fun randomBytes(length: Int): String {
-        val buffer = ByteBuffer.allocate(length)
-        SecureRandom().nextBytes(buffer.array())
-        return buffer.array().toString()
+    fun generateApiKey(): String {
+        val chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".toCharArray()
+        val random = SecureRandom()
+        val sb = StringBuilder(32)
+        for (i in 0 until 32) {
+            sb.append(chars[random.nextInt(chars.size)])
+        }
+        return sb.toString()
     }
 }

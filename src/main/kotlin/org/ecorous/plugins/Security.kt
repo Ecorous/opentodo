@@ -30,7 +30,7 @@ fun Application.configureSecurity() {
             } else if (DB.ifExistsUsername(input.username)) {
                 call.respond(mapOf("error" to "username already exists. must be unique"))
             } else {
-                var apiKey = Utils.randomBytes(32)
+                var apiKey = Utils.generateApiKey()
                 val account = Account(UUID.randomUUID(), input.username, apiKey)
                 try {
                     DB.pushAccount(account)
