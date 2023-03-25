@@ -6,9 +6,11 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.stringLiteral
 import java.util.UUID
 
-object Todos: UUIDTable() {
+object Todos: Table() {
+    val id = uuid("id")
     val title = varchar("title", 75)
-    val description = varchar("description", 500)
+    val description = varchar("description", 2000)
+    val group = varchar("group", 75)
     val accountID = uuid("accountID")
 }
 

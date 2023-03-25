@@ -1,5 +1,6 @@
 package org.ecorous.plugins
 
+import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
@@ -26,6 +27,7 @@ fun Application.configureSecurity() {
             val input = Json.decodeFromString<AccountInput>(json)
             println(DB.ifExistsUsername(input.username))
             if (input.username.length > 50) {
+
                 call.respond(mapOf("error" to "username too long. max chars: 50"))
             } else if (DB.ifExistsUsername(input.username)) {
                 call.respond(mapOf("error" to "username already exists. must be unique"))

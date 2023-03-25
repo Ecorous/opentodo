@@ -25,10 +25,7 @@ repositories {
 }
 
 tasks.shadowJar {
-    archiveVersion.set(project.version.toString())
-    archiveClassifier.set("")
     archiveFileName.set(archiveBaseName.get() + "-" + archiveVersion.get() + "-full.jar")
-
 }
 
 tasks.build {
