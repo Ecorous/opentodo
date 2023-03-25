@@ -15,7 +15,12 @@ fun Application.configureRouting() {
         }
         status(HttpStatusCode.NotFound) { call, status ->
             call.respond(mapOf("error" to "not found"))
-            org.ecorous.database.DB.init()
+        }
+        status(HttpStatusCode.MethodNotAllowed) { call, status ->
+            call.respond(mapOf("error" to "method not allowed"))
+        }
+        status(HttpStatusCode.InternalServerError) { call, status ->
+            call.respond(mapOf("error" to "internal server error"))
         }
     }
 
