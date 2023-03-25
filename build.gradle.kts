@@ -24,10 +24,16 @@ repositories {
     maven { url = uri("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-js-wrappers") }
 }
 
-tasks.jar {
-    dependsOn("shadowJar")
+tasks.shadowJar {
+    archiveVersion.set(project.version.toString())
+    archiveClassifier.set("")
+    archiveFileName.set(archiveBaseName.get() + "-" + archiveVersion.get() + "-full.jar")
+
 }
 
+tasks.build {
+    dependsOn("shadowJar")
+}
 
 dependencies {
     implementation("io.ktor:ktor-server-core-jvm:$ktor_version")
