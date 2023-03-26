@@ -14,40 +14,31 @@ object DB {
     fun init() {
         db = Database.connect("jdbc:sqlite:opentodo.db")
         initialized = true
-        db.apply {
-            transaction {
-                addLogger(StdOutSqlLogger)
-                SchemaUtils.create(Todos)
-                SchemaUtils.create(Accounts)
-            }
+        transaction(db) {
+            SchemaUtils.create(Todos)
+            SchemaUtils.create(Accounts)
         }
     }
 
     fun pushAccount(account: Account) {
-        db.apply {
-            transaction {
-                addLogger(StdOutSqlLogger)
-                Accounts.insert {
-                    it[id] = account.id
-                    it[username] = account.username
-                    it[password] = account.password
-                    it[apiKey] = account.apiKey
-                }
+        transaction(db) {
+            Accounts.insert {
+                it[id] = account.id
+                it[username] = account.username
+                it[password] = account.password
+                it[apiKey] = account.apiKey
             }
         }
     }
 
     fun pushTodo(todo: Todo) {
-        db.apply {
-            transaction {
-                addLogger(StdOutSqlLogger)
-                Todos.insert {
-                    it[id] = todo.id
-                    it[title] = todo.title
-                    it[description] = todo.description
-                    it[group] = todo.group
-                    it[accountID] = todo.accountID
-                }
+        transaction(db) {
+            Todos.insert {
+                it[id] = todo.id
+                it[title] = todo.title
+                it[description] = todo.description
+                it[group] = todo.group
+                it[accountID] = todo.accountID
             }
         }
     }
@@ -83,7 +74,6 @@ object DB {
         val todos = mutableListOf<Todo>()
         db.apply {
             transaction {
-                addLogger(StdOutSqlLogger)
                 val selection = Todos.select { Todos.accountID eq account.id }
                 selection.forEach {
                     todos.add(Todo(it[Todos.id], it[Todos.title], it[Todos.description], it[Todos.group], it[Todos.accountID]))
@@ -97,7 +87,6 @@ object DB {
         val todos = mutableListOf<SerializableTodo>()
         db.apply {
             transaction {
-                addLogger(StdOutSqlLogger)
                 val selection = Todos.select { Todos.accountID eq account.id }
                 selection.forEach {
                     todos.add(SerializableTodo(it[Todos.id].toString(), it[Todos.title], it[Todos.description], it[Todos.group]))
@@ -109,15 +98,13 @@ object DB {
 
     fun accountByUsernameExists(username: String): Boolean {
         return transaction(db) {
-            addLogger(StdOutSqlLogger)
             !Accounts.select { Accounts.username eq username }.empty()
         }
     }
 
     fun deleteAccount(account: Account) {
         transaction(db) {
-            addLogger(StdOutSqlLogger)
-            Accounts.deleteWhere { Accounts.id eq account.id }
+            Accounts.deleteWhere { id eq account.id }
         }
     }
 }
