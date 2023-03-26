@@ -79,6 +79,16 @@ object DB {
         )
     }
 
+    private fun ResultRow.todoFromRow(): Todo {
+        return Todo(
+            id = this[Todos.id],
+            title = this[Todos.title],
+            description = this[Todos.description],
+            group = this[Todos.group],
+            accountID = this[Todos.accountID],
+        )
+    }
+
     fun getTodosForAccount(account: Account): List<Todo> {
         val todos = mutableListOf<Todo>()
         db.apply {
@@ -86,7 +96,15 @@ object DB {
                 addLogger(StdOutSqlLogger)
                 val selection = Todos.select { Todos.accountID eq account.id }
                 selection.forEach {
-                    todos.add(Todo(it[Todos.id], it[Todos.title], it[Todos.description], it[Todos.group], it[Todos.accountID]))
+                    todos.add(
+                        Todo(
+                            it[Todos.id],
+                            it[Todos.title],
+                            it[Todos.description],
+                            it[Todos.group],
+                            it[Todos.accountID]
+                        )
+                    )
                 }
             }
         }
@@ -100,7 +118,14 @@ object DB {
                 addLogger(StdOutSqlLogger)
                 val selection = Todos.select { Todos.accountID eq account.id }
                 selection.forEach {
-                    todos.add(SerializableTodo(it[Todos.id].toString(), it[Todos.title], it[Todos.description], it[Todos.group]))
+                    todos.add(
+                        SerializableTodo(
+                            it[Todos.id].toString(),
+                            it[Todos.title],
+                            it[Todos.description],
+                            it[Todos.group]
+                        )
+                    )
                 }
             }
         }
@@ -119,5 +144,22 @@ object DB {
             addLogger(StdOutSqlLogger)
             Accounts.deleteWhere { Accounts.id eq account.id }
         }
+    }
+
+    fun getTodoByIDOrNull(id: UUID): Todo? {
+        return transaction(db) {
+            Todos.select { Todos.id eq id }.singleOrNull()?.todoFromRow()
+        }
+    }
+
+    fun Todo.hasPermission(account: Account): Boolean {
+        return account.hasPermission(this)
+    }
+
+    fun Account.hasPermission(todo: Todo): Boolean {
+        return transaction(db) {
+            addLogger(StdOutSqlLogger)
+            Todos.select { Todos.id eq todo.id }.singleOrNull()?.get(Todos.accountID)
+        } == this.id
     }
 }

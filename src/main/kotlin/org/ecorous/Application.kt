@@ -5,9 +5,14 @@ import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.openapi.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
 import org.ecorous.database.DB
-import org.ecorous.plugins.*
-import kotlin.system.exitProcess
+import org.ecorous.plugins.configureRouting
+import org.ecorous.plugins.configureSecurity
+import org.ecorous.plugins.configureSerialization
+import org.ecorous.plugins.configureTemplating
 
 fun main() {
     with(DB) {
@@ -23,6 +28,9 @@ fun main() {
 fun Application.module() {
     install(ContentNegotiation) {
         json()
+    }
+    routing {
+        openAPI(path = "openapi", swaggerFile = "openapi/documentation.yaml")
     }
     configureSecurity()
     configureSerialization()

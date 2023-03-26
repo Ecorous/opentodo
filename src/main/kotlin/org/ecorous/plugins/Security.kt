@@ -41,7 +41,10 @@ fun Application.configureSecurity() {
                 return@post
             }
             if (input.password == null) {
-                call.respond(HttpStatusCode.BadRequest, mapOf("error" to ":catstare: https://cdn.discordapp.com/emojis/1043075191955267665.png"))
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("error" to ":catstare: https://cdn.discordapp.com/emojis/1043075191955267665.png")
+                )
                 return@post
             }
 

@@ -2,10 +2,11 @@ package org.ecorous
 
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
-import io.ktor.server.testing.*
-import kotlin.test.*
 import io.ktor.http.*
-import org.ecorous.plugins.*
+import io.ktor.server.testing.*
+import org.ecorous.plugins.configureRouting
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class ApplicationTest {
     @Test

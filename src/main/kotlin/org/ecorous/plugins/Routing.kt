@@ -1,38 +1,44 @@
 package org.ecorous.plugins
 
-import io.ktor.server.routing.*
-import io.ktor.server.response.*
-import io.ktor.server.plugins.statuspages.*
 import io.ktor.http.*
-import io.ktor.server.http.content.*
 import io.ktor.server.application.*
+import io.ktor.server.http.content.*
+import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.request.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.ecorous.Todo
+import org.ecorous.Utils.serializable
 import org.ecorous.database.DB
+import org.ecorous.database.DB.hasPermission
 import java.util.*
 
 @Serializable
 data class TodoInput(val title: String, val description: String, val group: String)
+
 fun Application.configureRouting() {
     install(StatusPages) {
         exception<Throwable> { call, cause ->
             cause.printStackTrace()
             call.respond(mapOf("error" to "exception caught: $cause"))
         }
-        status(HttpStatusCode.NotFound) { call, status ->
+        status(HttpStatusCode.NotFound) { call, _ ->
             call.respond(mapOf("error" to "not found"))
         }
-        status(HttpStatusCode.MethodNotAllowed) { call, status ->
+        status(HttpStatusCode.MethodNotAllowed) { call, _ ->
             call.respond(mapOf("error" to "method not allowed"))
         }
-        status(HttpStatusCode.InternalServerError) { call, status ->
+        status(HttpStatusCode.InternalServerError) { call, _ ->
             call.respond(mapOf("error" to "internal server error"))
         }
-        status(HttpStatusCode.Unauthorized) { call, status ->
+        status(HttpStatusCode.Unauthorized) { call, _ ->
             call.respond(mapOf("error" to "unauthorized"))
+        }
+        status(HttpStatusCode.Forbidden) { call, _ ->
+            call.respond(mapOf("error" to "access denied"))
         }
     }
 
@@ -54,7 +60,10 @@ fun Application.configureRouting() {
                     if (input.title.length > 75) {
                         call.respond(HttpStatusCode.BadRequest, mapOf("error" to "title too long. max chars: 75"))
                     } else if (input.description.length > 2000) {
-                        call.respond(HttpStatusCode.BadRequest, mapOf("error" to "description too long. max chars: 2000"))
+                        call.respond(
+                            HttpStatusCode.BadRequest,
+                            mapOf("error" to "description too long. max chars: 2000")
+                        )
                     } else if (input.group.length > 75) {
                         call.respond(HttpStatusCode.BadRequest, mapOf("error" to "group too long. max chars: 75"))
                     } else {
@@ -74,12 +83,44 @@ fun Application.configureRouting() {
             } else {
                 val account = DB.getAccountByKeyOrNull(apiKey)
                 if (account == null) {
-                    call.respond(HttpStatusCode.Unauthorized)
+                    call.respond(HttpStatusCode.Unauthorized, HttpStatusCode.Unauthorized)
                 } else {
                     call.respond(DB.getSerializableTodosForAccount(account))
                 }
             }
         }
+
+        get("/todo/{id}") {
+            val apiKey = call.request.headers["Authorization"]
+            if (apiKey == null) {
+                call.respond(HttpStatusCode.Unauthorized)
+            } else {
+                val account = DB.getAccountByKeyOrNull(apiKey)
+                if (account == null) {
+                    call.respond(HttpStatusCode.Unauthorized)
+                } else {
+                    val idStr: String? = call.parameters["id"]
+                    if (idStr == null) {
+                        call.respond(HttpStatusCode.NotFound)
+                    } else {
+                        try {
+                            val id = UUID.fromString(idStr)
+                            val todo = DB.getTodoByIDOrNull(id)
+                            if (todo == null) {
+                                call.respond(HttpStatusCode.NotFound)
+                            } else if (account.hasPermission(todo)) {
+                                call.respond(todo.serializable())
+                            } else {
+                                call.respond(HttpStatusCode.Forbidden, HttpStatusCode.Forbidden)
+                            }
+                        } catch (_: IllegalArgumentException) {
+                            call.respond(HttpStatusCode.BadRequest, mapOf("error" to "invalid id"))
+                        }
+                    }
+                }
+            }
+        }
+
         // Static plugin. Try to access `/static/index.html`
         static("/static") {
             resources("static")
