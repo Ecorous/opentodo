@@ -29,9 +29,9 @@ fun Application.module() {
     install(ContentNegotiation) {
         json()
     }
-    routing {
+    /*routing {
         openAPI(path = "openapi", swaggerFile = "openapi/documentation.yaml")
-    }
+    }*/
     configureSecurity()
     configureSerialization()
     configureTemplating()
