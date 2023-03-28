@@ -10,14 +10,18 @@ import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import org.ecorous.Group
 import org.ecorous.Todo
 import org.ecorous.Utils.serializable
+import org.ecorous.Utils.validUUID
 import org.ecorous.database.DB
 import org.ecorous.database.DB.hasPermission
 import java.util.*
 
 @Serializable
 data class TodoInput(val title: String, val description: String, val group: String)
+@Serializable
+data class GroupInput (val title: String, val members: List<String>)
 
 fun Application.configureRouting() {
     install(StatusPages) {
@@ -102,19 +106,81 @@ fun Application.configureRouting() {
                     val idStr: String? = call.parameters["id"]
                     if (idStr == null) {
                         call.respond(HttpStatusCode.NotFound)
+                    } else if (!idStr.validUUID()) {
+                        call.respond(HttpStatusCode.BadRequest, mapOf("error" to "invalid id"))
+                    } else {
+                        val id = UUID.fromString(idStr)
+                        val todo = DB.getTodoByIDOrNull(id)
+                        if (todo == null) {
+                            call.respond(HttpStatusCode.NotFound, HttpStatusCode.NotFound)
+                        } else if (account.hasPermission(todo)) {
+                            call.respond(todo.serializable())
+                        } else {
+                            call.respond(HttpStatusCode.Forbidden, HttpStatusCode.Forbidden)
+                        }
+                    }
+                }
+            }
+        }
+        delete("/todo/{id}") {
+            val apiKey = call.request.headers["Authorization"]
+            if (apiKey == null) {
+                call.respond(HttpStatusCode.Unauthorized, HttpStatusCode.Unauthorized)
+            } else {
+                val account = DB.getAccountByKeyOrNull(apiKey)
+                if (account == null) {
+                    call.respond(HttpStatusCode.Unauthorized, HttpStatusCode.Unauthorized)
+                } else {
+                    val idStr: String? = call.parameters["id"]
+                    if (idStr == null) {
+                        call.respond(HttpStatusCode.NotFound, HttpStatusCode.NotFound)
                     } else {
                         try {
                             val id = UUID.fromString(idStr)
                             val todo = DB.getTodoByIDOrNull(id)
                             if (todo == null) {
-                                call.respond(HttpStatusCode.NotFound)
+                                call.respond(HttpStatusCode.NotFound, HttpStatusCode.NotFound)
                             } else if (account.hasPermission(todo)) {
-                                call.respond(todo.serializable())
+                                DB.deleteTodo(todo)
                             } else {
                                 call.respond(HttpStatusCode.Forbidden, HttpStatusCode.Forbidden)
                             }
                         } catch (_: IllegalArgumentException) {
                             call.respond(HttpStatusCode.BadRequest, mapOf("error" to "invalid id"))
+                        }
+                    }
+                }
+            }
+        }
+
+        post("/group") {
+            val apiKey = call.request.headers["Authorization"]
+            if (apiKey == null) {
+                call.respond(HttpStatusCode.Unauthorized)
+            } else {
+                val account = DB.getAccountByKeyOrNull(apiKey)
+                if (account == null) {
+                    call.respond(HttpStatusCode.Unauthorized)
+                } else {
+                    val json = call.receiveText()
+                    val input = Json.decodeFromString<GroupInput>(json)
+                    if (input.title.length > 75) {
+                        call.respond(HttpStatusCode.BadRequest, mapOf("error" to "title too long. max chars: 75"))
+                    } else {
+                        var inputValid: Boolean = true
+                        val list = mutableListOf<UUID>()
+                        input.members.forEach {
+                            if (!it.validUUID()) {
+                                inputValid = false
+                                call.respond(HttpStatusCode.BadRequest, call.respond(HttpStatusCode.BadRequest, mapOf("error" to "invalid id")))
+                            } else {
+                                list.add(input.members.indexOf(it), UUID.fromString(it))
+                            }
+                        }
+                        if (inputValid) {
+                            val id = UUID.randomUUID()
+                            val group = Group(id, input.title, account.id, list)
+                            DB.pushGroup(group)
                         }
                     }
                 }

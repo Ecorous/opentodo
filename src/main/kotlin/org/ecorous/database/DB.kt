@@ -1,6 +1,7 @@
 package org.ecorous.database
 
 import org.ecorous.Account
+import org.ecorous.Group
 import org.ecorous.SerializableTodo
 import org.ecorous.Todo
 import org.jetbrains.exposed.sql.*
@@ -16,7 +17,19 @@ object DB {
         initialized = true
         transaction(db) {
             SchemaUtils.create(Todos)
+            SchemaUtils.create(Groups)
             SchemaUtils.create(Accounts)
+        }
+    }
+
+    fun pushGroup(group: Group) {
+        transaction(db) {
+            Groups.insert {
+                it[id] = group.id
+                it[title] = group.title
+                it[owner] = group.owner
+                it[members] = group.members
+            }
         }
     }
 
@@ -130,6 +143,18 @@ object DB {
     fun deleteAccount(account: Account) {
         transaction(db) {
             Accounts.deleteWhere { id eq account.id }
+        }
+    }
+
+    fun deleteGroup(group: Group) {
+        transaction(db) {
+            Groups.deleteWhere { id eq group.id }
+        }
+    }
+
+    fun deleteTodo(todo: Todo) {
+        transaction(db) {
+            Todos.deleteWhere { id eq todo.id }
         }
     }
 
