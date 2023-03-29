@@ -22,6 +22,10 @@ object Accounts : Table() {
 object Groups : Table() {
     val id = uuid("id")
     val title = varchar("title", 75)
-    val owner = uuid("owner")
-    val members = registerColumn<List<UUID>>("members", UUIDColumnType())
+}
+
+object GroupMembers : Table() {
+    val groupID = uuid("groupID")
+    val accountID = uuid("accountID")
+    val owner = bool("owner")
 }

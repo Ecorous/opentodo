@@ -16,6 +16,7 @@ import me.gosimple.nbvcxz.resources.DictionaryBuilder
 import org.ecorous.Account
 import org.ecorous.Utils
 import org.ecorous.database.DB
+import org.ecorous.database.DB.setAPIKey
 import java.util.*
 
 @Serializable
@@ -72,6 +73,39 @@ fun Application.configureSecurity() {
                     DB.deleteAccount(account)
                     call.respond(mapOf("message" to "account deleted"))
                 }
+            }
+        }
+        post("/account/regenerate") {
+            val json = call.receiveText()
+            val input = Json.decodeFromString<AccountInput>(json)
+
+            if (input.username == null) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "enter a username"))
+                return@post
+            }
+            if (input.username.length > 50) {
+
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "username too long. max chars: 50"))
+                return@post
+            }
+            if (input.password == null) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("error" to ":catstare: https://cdn.discordapp.com/emojis/1043075191955267665.png")
+                )
+                return@post
+            }
+            val account = DB.getAccountByUsernameOrNull(input.username)
+            if (account == null) {
+                call.respond(mapOf("error" to "unknown account"))
+                return@post
+            } else if (!Password.check(input.password, account!!.password).withArgon2()) {
+                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "incorrect password"))
+                return@post
+            } else {
+                val key = Utils.generateApiKey()
+                account.setAPIKey(key)
+                call.respond(HttpStatusCode.OK, mapOf("id" to account.id, "key" to key))
             }
         }
     }

@@ -18,17 +18,28 @@ object DB {
         transaction(db) {
             SchemaUtils.create(Todos)
             SchemaUtils.create(Groups)
+            SchemaUtils.create(GroupMembers)
             SchemaUtils.create(Accounts)
         }
     }
 
-    fun pushGroup(group: Group) {
+   fun pushGroup(group: Group) {
         transaction(db) {
             Groups.insert {
                 it[id] = group.id
                 it[title] = group.title
-                it[owner] = group.owner
-                it[members] = group.members
+            }
+            GroupMembers.insert {
+                it[groupID] = group.id
+                it[accountID] = group.owner
+                it[owner] = true
+            }
+            group.members.forEach { id: UUID ->
+                GroupMembers.insert {
+                    it[groupID] = group.id
+                    it[accountID] = id
+                    it[owner] = false
+                }
             }
         }
     }
@@ -41,6 +52,17 @@ object DB {
                 it[password] = account.password
                 it[apiKey] = account.apiKey
             }
+        }
+    }
+
+    fun Account.setAPIKey(key: String) {
+        var out = key
+        if (key == "") {
+            out = this.apiKey
+        }
+        transaction(db) {
+            val id = this@setAPIKey.id
+            Accounts.select { Accounts.id eq id }.singleOrNull()!![Accounts.apiKey] = out
         }
     }
 
