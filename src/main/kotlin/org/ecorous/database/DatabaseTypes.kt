@@ -10,6 +10,7 @@ object Todos : Table() {
     val description = varchar("description", 2000)
     val group = varchar("group", 75)
     val accountID = uuid("accountID")
+    val flags = long("flags")
 }
 
 object Accounts : Table() {

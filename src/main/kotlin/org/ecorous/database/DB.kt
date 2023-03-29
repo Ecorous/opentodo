@@ -74,6 +74,7 @@ object DB {
                 it[description] = todo.description
                 it[group] = todo.group
                 it[accountID] = todo.accountID
+                it[flags] = todo.flags
             }
         }
     }
@@ -112,6 +113,7 @@ object DB {
             description = this[Todos.description],
             group = this[Todos.group],
             accountID = this[Todos.accountID],
+            flags = this[Todos.flags],
         )
     }
 
@@ -121,15 +123,7 @@ object DB {
             transaction {
                 val selection = Todos.select { Todos.accountID eq account.id }
                 selection.forEach {
-                    todos.add(
-                        Todo(
-                            it[Todos.id],
-                            it[Todos.title],
-                            it[Todos.description],
-                            it[Todos.group],
-                            it[Todos.accountID]
-                        )
-                    )
+                    todos.add(it.todoFromRow())
                 }
             }
         }

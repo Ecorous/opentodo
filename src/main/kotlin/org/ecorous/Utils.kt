@@ -1,12 +1,11 @@
 package org.ecorous
 
 import kotlinx.serialization.Serializable
-import org.ecorous.Utils.serializable
 import java.security.SecureRandom
 import java.util.*
 
 data class Account(val id: UUID, val username: String, val password: String?, val apiKey: String)
-data class Todo(val id: UUID, val title: String, val description: String, val group: String, val accountID: UUID)
+data class Todo(val id: UUID, val title: String, val description: String, val group: String, val accountID: UUID, val flags: Long)
 data class Group(val id: UUID, val title: String, val owner: UUID, val members: List<UUID>)
 @Serializable
 data class SerializableTodo(val id: String, val title: String, val description: String, val group: String)
