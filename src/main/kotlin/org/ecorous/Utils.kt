@@ -17,7 +17,7 @@ data class Todo(
     val description: String,
     val group: String,
     val accountID: UUID,
-    val flags: Long,
+    val flags: Long = 0L,
 ) {
     val completed: Boolean
         get() = (flags and TodoFlags.COMPLETED) != 0L
@@ -28,7 +28,7 @@ data class Group(
     val title: String,
     val owner: UUID,
     val members: List<UUID>,
-    val permissions: Long,
+    val permissions: Long = 0L,
 )
 
 @Serializable
