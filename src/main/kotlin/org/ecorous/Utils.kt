@@ -8,6 +8,7 @@ data class Account(
     val id: UUID,
     val username: String,
     val password: String?,
+    val colour: Int,
     val apiKey: String,
 )
 
@@ -15,6 +16,7 @@ data class Task(
     val id: UUID,
     val title: String,
     val description: String,
+    val colour: Int,
     val group: String,
     val accountID: UUID,
     val flags: Long = 0L,
@@ -23,10 +25,27 @@ data class Task(
         get() = (flags and TodoFlags.COMPLETED) != 0L
 }
 
+data class Project(
+    val id: UUID,
+    val title: String,
+    val owner: Account,
+    val colour: Int,
+    val columns: List<ProjectColumn>
+)
+
+data class ProjectColumn(
+    val id: UUID,
+    val project: Project,
+    val title: String,
+    val colour: Int,
+    val tasks: List<Task>
+)
+
 data class Group(
     val id: UUID,
     val title: String,
     val owner: UUID,
+    val colour: Int,
     val members: List<UUID>,
     val permissions: Long = 0L,
 )
