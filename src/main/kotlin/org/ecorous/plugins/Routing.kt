@@ -188,8 +188,5 @@ fun Application.configureRouting() {
         }
 
         // Static plugin. Try to access `/static/index.html`
-        static("/static") {
-            resources("static")
-        }
     }
 }
