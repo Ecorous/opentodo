@@ -117,6 +117,16 @@ object DB {
         )
     }
 
+    private fun ResultRow.groupFromRow(): Group {
+        return Group(
+            id = this[Groups.id],
+            title = this[Groups.title],
+            permissions = this[Groups.permissions],
+            owner = UUID(0L, 0L),
+            members = emptyList(),
+        )
+    }
+
     fun getTodosForAccount(account: Account): List<Todo> {
         val todos = mutableListOf<Todo>()
         db.apply {
