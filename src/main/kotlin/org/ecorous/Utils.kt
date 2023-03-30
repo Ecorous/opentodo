@@ -28,6 +28,7 @@ data class Group(
     val title: String,
     val owner: UUID,
     val members: List<UUID>,
+    val permissions: Long,
 )
 
 @Serializable

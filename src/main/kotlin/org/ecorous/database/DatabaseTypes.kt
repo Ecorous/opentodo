@@ -1,8 +1,6 @@
 package org.ecorous.database
 
 import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.UUIDColumnType
-import java.util.UUID
 
 object Todos : Table() {
     val id = uuid("id")
@@ -23,6 +21,7 @@ object Accounts : Table() {
 object Groups : Table() {
     val id = uuid("id")
     val title = varchar("title", 75)
+    val permissions = long("permissions")
 }
 
 object GroupMembers : Table() {
