@@ -18,7 +18,10 @@ data class Todo(
     val group: String,
     val accountID: UUID,
     val flags: Long,
-)
+) {
+    val completed: Boolean
+        get() = (flags and TodoFlags.COMPLETED) != 0L
+}
 
 data class Group(
     val id: UUID,
@@ -63,6 +66,7 @@ object Utils {
         }
         return SerializableGroup(this.id.toString(), this.title, this.owner.toString(), list)
     }
+
     fun String.validUUID(): Boolean {
         return try {
             UUID.fromString(this)
@@ -71,4 +75,8 @@ object Utils {
             false
         }
     }
+}
+
+object TodoFlags {
+    const val COMPLETED = 0x1L
 }
