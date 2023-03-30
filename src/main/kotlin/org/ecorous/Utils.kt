@@ -11,7 +11,7 @@ data class Account(
     val apiKey: String,
 )
 
-data class Todo(
+data class Task(
     val id: UUID,
     val title: String,
     val description: String,
@@ -32,7 +32,7 @@ data class Group(
 )
 
 @Serializable
-data class SerializableTodo(
+data class SerializableTask(
     val id: String,
     val title: String,
     val description: String,
@@ -57,8 +57,8 @@ object Utils {
         return sb.toString()
     }
 
-    fun Todo.serializable(): SerializableTodo {
-        return SerializableTodo(this.id.toString(), this.title, this.description, this.group)
+    fun Task.serializable(): SerializableTask {
+        return SerializableTask(this.id.toString(), this.title, this.description, this.group)
     }
     fun Group.serializable(): SerializableGroup {
         val list = mutableListOf<String>()

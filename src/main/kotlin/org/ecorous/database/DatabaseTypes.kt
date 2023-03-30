@@ -2,7 +2,7 @@ package org.ecorous.database
 
 import org.jetbrains.exposed.sql.Table
 
-object Todos : Table() {
+object Tasks : Table() {
     val id = uuid("id")
     val title = varchar("title", 75)
     val description = varchar("description", 2000)

@@ -11,7 +11,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.ecorous.Group
-import org.ecorous.Todo
+import org.ecorous.Task
 import org.ecorous.Utils.serializable
 import org.ecorous.Utils.validUUID
 import org.ecorous.database.DB
@@ -19,7 +19,7 @@ import org.ecorous.database.DB.hasPermission
 import java.util.*
 
 @Serializable
-data class TodoInput(val title: String, val description: String, val group: String)
+data class TaskInput(val title: String, val description: String, val group: String)
 @Serializable
 data class GroupInput (val title: String, val members: List<String>)
 
@@ -50,7 +50,7 @@ fun Application.configureRouting() {
         get("/") {
             call.respondText("Hello World!")
         }
-        post("/todo") {
+        post("/task") {
             val apiKey = call.request.headers["Authorization"]
             if (apiKey == null) {
                 call.respond(HttpStatusCode.Unauthorized)
@@ -60,7 +60,7 @@ fun Application.configureRouting() {
                     call.respond(HttpStatusCode.Unauthorized)
                 } else {
                     val json = call.receiveText()
-                    val input = Json.decodeFromString<TodoInput>(json)
+                    val input = Json.decodeFromString<TaskInput>(json)
                     if (input.title.length > 75) {
                         call.respond(HttpStatusCode.BadRequest, mapOf("error" to "title too long. max chars: 75"))
                     } else if (input.description.length > 2000) {
@@ -71,16 +71,16 @@ fun Application.configureRouting() {
                     } else if (input.group.length > 75) {
                         call.respond(HttpStatusCode.BadRequest, mapOf("error" to "group too long. max chars: 75"))
                     } else {
-                        val todoID = UUID.randomUUID()
-                        val todo = Todo(todoID, input.title, input.description, input.group, account.id)
-                        DB.pushTodo(todo)
-                        call.respond(mapOf("id" to todoID.toString())) // // 1aa25a42-8f16-4c23-a452-0e5d8498d819
+                        val taskID = UUID.randomUUID()
+                        val task = Task(taskID, input.title, input.description, input.group, account.id)
+                        DB.pushTask(task)
+                        call.respond(mapOf("id" to taskID.toString())) // // 1aa25a42-8f16-4c23-a452-0e5d8498d819
                     }
                 }
             }
 
         }
-        get("/todos") {
+        get("/tasks") {
             val apiKey = call.request.headers["Authorization"]
             if (apiKey == null) {
                 call.respond(HttpStatusCode.Unauthorized)
@@ -89,12 +89,12 @@ fun Application.configureRouting() {
                 if (account == null) {
                     call.respond(HttpStatusCode.Unauthorized, HttpStatusCode.Unauthorized)
                 } else {
-                    call.respond(DB.getSerializableTodosForAccount(account))
+                    call.respond(DB.getSerializableTasksForAccount(account))
                 }
             }
         }
 
-        get("/todo/{id}") {
+        get("/task/{id}") {
             val apiKey = call.request.headers["Authorization"]
             if (apiKey == null) {
                 call.respond(HttpStatusCode.Unauthorized)
@@ -110,11 +110,11 @@ fun Application.configureRouting() {
                         call.respond(HttpStatusCode.BadRequest, mapOf("error" to "invalid id"))
                     } else {
                         val id = UUID.fromString(idStr)
-                        val todo = DB.getTodoByIDOrNull(id)
-                        if (todo == null) {
+                        val task = DB.getTaskByIDOrNull(id)
+                        if (task == null) {
                             call.respond(HttpStatusCode.NotFound, HttpStatusCode.NotFound)
-                        } else if (account.hasPermission(todo)) {
-                            call.respond(todo.serializable())
+                        } else if (account.hasPermission(task)) {
+                            call.respond(task.serializable())
                         } else {
                             call.respond(HttpStatusCode.Forbidden, HttpStatusCode.Forbidden)
                         }
@@ -122,7 +122,7 @@ fun Application.configureRouting() {
                 }
             }
         }
-        delete("/todo/{id}") {
+        delete("/task/{id}") {
             val apiKey = call.request.headers["Authorization"]
             if (apiKey == null) {
                 call.respond(HttpStatusCode.Unauthorized, HttpStatusCode.Unauthorized)
@@ -137,11 +137,11 @@ fun Application.configureRouting() {
                     } else {
                         try {
                             val id = UUID.fromString(idStr)
-                            val todo = DB.getTodoByIDOrNull(id)
-                            if (todo == null) {
+                            val task = DB.getTaskByIDOrNull(id)
+                            if (task == null) {
                                 call.respond(HttpStatusCode.NotFound, HttpStatusCode.NotFound)
-                            } else if (account.hasPermission(todo)) {
-                                DB.deleteTodo(todo)
+                            } else if (account.hasPermission(task)) {
+                                DB.deleteTask(task)
                             } else {
                                 call.respond(HttpStatusCode.Forbidden, HttpStatusCode.Forbidden)
                             }

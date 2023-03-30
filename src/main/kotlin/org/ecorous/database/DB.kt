@@ -1,9 +1,6 @@
 package org.ecorous.database
 
-import org.ecorous.Account
-import org.ecorous.Group
-import org.ecorous.SerializableTodo
-import org.ecorous.Todo
+import org.ecorous.*
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -16,7 +13,7 @@ object DB {
         db = Database.connect("jdbc:sqlite:opentodo.db")
         initialized = true
         transaction(db) {
-            SchemaUtils.create(Todos)
+            SchemaUtils.create(Tasks)
             SchemaUtils.create(Groups)
             SchemaUtils.create(GroupMembers)
             SchemaUtils.create(Accounts)
@@ -66,15 +63,15 @@ object DB {
         }
     }
 
-    fun pushTodo(todo: Todo) {
+    fun pushTask(task: Task) {
         transaction(db) {
-            Todos.insert {
-                it[id] = todo.id
-                it[title] = todo.title
-                it[description] = todo.description
-                it[group] = todo.group
-                it[accountID] = todo.accountID
-                it[flags] = todo.flags
+            Tasks.insert {
+                it[id] = task.id
+                it[title] = task.title
+                it[description] = task.description
+                it[group] = task.group
+                it[accountID] = task.accountID
+                it[flags] = task.flags
             }
         }
     }
@@ -106,14 +103,14 @@ object DB {
         )
     }
 
-    private fun ResultRow.todoFromRow(): Todo {
-        return Todo(
-            id = this[Todos.id],
-            title = this[Todos.title],
-            description = this[Todos.description],
-            group = this[Todos.group],
-            accountID = this[Todos.accountID],
-            flags = this[Todos.flags],
+    private fun ResultRow.taskFromRow(): Task {
+        return Task(
+            id = this[Tasks.id],
+            title = this[Tasks.title],
+            description = this[Tasks.description],
+            group = this[Tasks.group],
+            accountID = this[Tasks.accountID],
+            flags = this[Tasks.flags],
         )
     }
 
@@ -127,37 +124,37 @@ object DB {
         )
     }
 
-    fun getTodosForAccount(account: Account): List<Todo> {
-        val todos = mutableListOf<Todo>()
+    fun getTasksForAccount(account: Account): List<Task> {
+        val tasks = mutableListOf<Task>()
         db.apply {
             transaction {
-                val selection = Todos.select { Todos.accountID eq account.id }
+                val selection = Tasks.select { Tasks.accountID eq account.id }
                 selection.forEach {
-                    todos.add(it.todoFromRow())
+                    tasks.add(it.taskFromRow())
                 }
             }
         }
-        return todos
+        return tasks
     }
 
-    fun getSerializableTodosForAccount(account: Account): List<SerializableTodo> {
-        val todos = mutableListOf<SerializableTodo>()
+    fun getSerializableTasksForAccount(account: Account): List<SerializableTask> {
+        val tasks = mutableListOf<SerializableTask>()
         db.apply {
             transaction {
-                val selection = Todos.select { Todos.accountID eq account.id }
+                val selection = Tasks.select { Tasks.accountID eq account.id }
                 selection.forEach {
-                    todos.add(
-                        SerializableTodo(
-                            it[Todos.id].toString(),
-                            it[Todos.title],
-                            it[Todos.description],
-                            it[Todos.group]
+                    tasks.add(
+                        SerializableTask(
+                            it[Tasks.id].toString(),
+                            it[Tasks.title],
+                            it[Tasks.description],
+                            it[Tasks.group]
                         )
                     )
                 }
             }
         }
-        return todos
+        return tasks
     }
 
     fun accountByUsernameExists(username: String): Boolean {
@@ -178,26 +175,26 @@ object DB {
         }
     }
 
-    fun deleteTodo(todo: Todo) {
+    fun deleteTask(task: Task) {
         transaction(db) {
-            Todos.deleteWhere { id eq todo.id }
+            Tasks.deleteWhere { id eq task.id }
         }
     }
 
-    fun getTodoByIDOrNull(id: UUID): Todo? {
+    fun getTaskByIDOrNull(id: UUID): Task? {
         return transaction(db) {
-            Todos.select { Todos.id eq id }.singleOrNull()?.todoFromRow()
+            Tasks.select { Tasks.id eq id }.singleOrNull()?.taskFromRow()
         }
     }
 
-    fun Todo.hasPermission(account: Account): Boolean {
+    fun Task.hasPermission(account: Account): Boolean {
         return account.hasPermission(this)
     }
 
-    fun Account.hasPermission(todo: Todo): Boolean {
+    fun Account.hasPermission(task: Task): Boolean {
         return transaction(db) {
             addLogger(StdOutSqlLogger)
-            Todos.select { Todos.id eq todo.id }.singleOrNull()?.get(Todos.accountID)
+            Tasks.select { Tasks.id eq task.id }.singleOrNull()?.get(Tasks.accountID)
         } == this.id
     }
 }
