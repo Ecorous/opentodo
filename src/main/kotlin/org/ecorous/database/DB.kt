@@ -5,7 +5,6 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.*
-
 object DB {
     var db: Database? = null
     var initialized = false
@@ -17,6 +16,10 @@ object DB {
             SchemaUtils.create(Groups)
             SchemaUtils.create(GroupMembers)
             SchemaUtils.create(Accounts)
+            SchemaUtils.create(Projects)
+            SchemaUtils.create(ProjectColumns)
+            SchemaUtils.create(ProjectGroups)
+            SchemaUtils.create(ProjectColumnsTasks)
         }
     }
 
@@ -99,6 +102,7 @@ object DB {
             id = this[Accounts.id],
             username = this[Accounts.username],
             password = this[Accounts.password],
+            colour = this[Accounts.colour],
             apiKey = this[Accounts.apiKey],
         )
     }
@@ -110,6 +114,7 @@ object DB {
             description = this[Tasks.description],
             group = this[Tasks.group],
             accountID = this[Tasks.accountID],
+            colour = this[Tasks.colour],
             flags = this[Tasks.flags],
         )
     }
@@ -119,6 +124,7 @@ object DB {
             id = this[Groups.id],
             title = this[Groups.title],
             permissions = this[Groups.permissions],
+            colour = this[Groups.colour],
             owner = UUID(0L, 0L),
             members = emptyList(),
         )

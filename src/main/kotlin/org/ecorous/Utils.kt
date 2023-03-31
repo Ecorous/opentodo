@@ -29,8 +29,9 @@ data class Project(
     val id: UUID,
     val title: String,
     val owner: Account,
+    val groups: List<Group>,
     val colour: Int,
-    val columns: List<ProjectColumn>
+    val projectColumns: List<ProjectColumn>
 )
 
 data class ProjectColumn(

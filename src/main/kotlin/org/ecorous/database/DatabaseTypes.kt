@@ -38,3 +38,21 @@ object Projects : Table() {
     val title = varchar("title", 75)
     val colour = integer("colour")
 }
+
+object ProjectGroups: Table() {
+    val project = uuid("project")
+    val group = uuid("group")
+    val permissions = long("permissions")
+}
+
+object ProjectColumns: Table() {
+    val id = uuid("id")
+    val project = uuid("project")
+    val title = varchar("title", 75)
+    val colour = integer("colour")
+}
+
+object ProjectColumnsTasks: Table() {
+    val projectColumn = uuid("projectColumn")
+    val task = uuid("task")
+}
