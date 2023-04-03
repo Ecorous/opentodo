@@ -48,7 +48,7 @@ fun Application.configureRouting() {
 
     routing {
         get("/") {
-            call.respondText("Hello World!")
+            call.respond(mapOf("message" to "Hello World!", "docs" to "https://docs.opentodo.ecorous.org"))
         }
         post("/task") {
             val apiKey = call.request.headers["Authorization"]
@@ -72,7 +72,7 @@ fun Application.configureRouting() {
                         call.respond(HttpStatusCode.BadRequest, mapOf("error" to "group too long. max chars: 75"))
                     } else {
                         val taskID = UUID.randomUUID()
-                        val task = Task(taskID, input.title, input.description, input.group, account.id)
+                        val task = Task(taskID, input.title, input.description, 0xFFFFFFF, input.group, account.id)
                         DB.pushTask(task)
                         call.respond(mapOf("id" to taskID.toString())) // // 1aa25a42-8f16-4c23-a452-0e5d8498d819
                     }
@@ -179,7 +179,7 @@ fun Application.configureRouting() {
                         }
                         if (inputValid) {
                             val id = UUID.randomUUID()
-                            val group = Group(id, input.title, account.id, list)
+                            val group = Group(id, input.title, account.id, 0xFFFFFFF, list)
                             DB.pushGroup(group)
                         }
                     }

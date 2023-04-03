@@ -99,7 +99,7 @@ fun Application.configureSecurity() {
             if (account == null) {
                 call.respond(mapOf("error" to "unknown account"))
                 return@post
-            } else if (!Password.check(input.password, account!!.password).withArgon2()) {
+            } else if (!Password.check(input.password, account.password).withArgon2()) {
                 call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "incorrect password"))
                 return@post
             } else {
@@ -132,7 +132,7 @@ private suspend fun PipelineContext<Unit, ApplicationCall>.createAccount(input: 
     val result = Password.hash(input.password).addRandomSalt().withArgon2().result
     val apiKey = Utils.generateApiKey()
 
-    val account = Account(UUID.randomUUID(), input.username!!, result, apiKey)
+    val account = Account(UUID.randomUUID(), input.username!!, result, 0xFFFFFFF, apiKey)
 
     DB.pushAccount(account)
 
