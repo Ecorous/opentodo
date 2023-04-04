@@ -97,7 +97,7 @@ fun Application.configureSecurity() {
             }
             val account = DB.getAccountByUsernameOrNull(input.username)
             if (account == null) {
-                call.respond(mapOf("error" to "unknown account"))
+                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "unknown account"))
                 return@post
             } else if (!Password.check(input.password, account.password).withArgon2()) {
                 call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "incorrect password"))
